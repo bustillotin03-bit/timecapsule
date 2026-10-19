@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ruri's Space</title>
 
-  <!-- Custom Ruri's Space Favicon (Replaces default globe/triangle icon) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='26' fill='%23000000'/%3E%3Crect x='4' y='4' width='92' height='92' rx='22' fill='none' stroke='%23ff47a3' stroke-width='5'/%3E%3Cpath d='M50 82 C50 82 20 62 20 40 C20 27 32 20 43 28 L50 35 L57 28 C68 20 80 27 80 40 C80 62 50 82 50 82 Z' fill='%23ff47a3'/%3E%3Ccircle cx='50' cy='48' r='5' fill='%23000000'/%3E%3Cpath d='M47 51 L45 62 H55 L53 51 Z' fill='%23000000'/%3E%3C/svg%3E" />
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -104,7 +103,6 @@
 </head>
 <body class="p-4 md:p-6 select-none text-sm md:text-base">
 
-  <!-- TOP RIGHT PROFILE BUTTON -->
   <div class="fixed top-4 right-4 z-40">
     <div class="relative">
       <button onclick="toggleProfileMenu()" class="w-10 h-10 md:w-11 md:h-11 rounded-full border-2 border-[#ff47a3] bg-black flex items-center justify-center overflow-hidden hover:scale-105 transition shadow-md shadow-[#ff47a3]/20">
@@ -114,7 +112,6 @@
         </svg>
       </button>
 
-      <!-- Text-Only Dropdown Menu -->
       <div id="profileMenu" class="hidden absolute right-0 mt-2 w-44 bg-zinc-950 border border-[#ff47a3] rounded-xl shadow-2xl py-1.5 z-50 text-xs">
         <div class="px-3.5 py-1.5 text-[11px] text-pink-300 border-b border-zinc-800 flex justify-between items-center">
           <span id="visitorBadge" class="truncate">Guest</span>
@@ -133,10 +130,8 @@
     </div>
   </div>
 
-  <!-- MAIN VIEW CONTAINER -->
   <main id="app" class="max-w-4xl mx-auto min-h-[85vh] flex items-center justify-center relative pt-8 md:pt-4"></main>
 
-  <!-- CUSTOM NOTIFICATION / GUARANTEE MODAL (Replaces ugly browser alerts!) -->
   <div id="noticeModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-zinc-950 border-2 border-[#ff47a3] rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl shadow-[#ff47a3]/20">
       <div id="noticeIcon" class="w-12 h-12 mx-auto mb-3 rounded-full bg-[#ffd1e6] text-[#d62976] flex items-center justify-center text-2xl font-bold">💌</div>
@@ -148,7 +143,6 @@
     </div>
   </div>
 
-  <!-- CUSTOM EDIT MODAL (Replaces browser prompt/confirm!) -->
   <div id="editorModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-zinc-950 border border-[#ff47a3] rounded-2xl max-w-sm w-full p-6 relative shadow-2xl text-xs">
       <button onclick="closeEditorModal()" class="absolute top-3 right-4 text-pink-300 hover:text-white text-xl">&times;</button>
@@ -161,7 +155,6 @@
     </div>
   </div>
 
-  <!-- AUTH / ACCESS CODE MODAL -->
   <div id="authModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-zinc-950 border border-[#ff47a3] rounded-2xl max-w-sm w-full p-6 relative text-center shadow-2xl">
       <button onclick="closeAuthModal()" class="absolute top-3 right-4 text-pink-300 hover:text-white text-xl">&times;</button>
@@ -204,15 +197,6 @@
     const dbClient = (DB_URL && DB_KEY && window.supabase)
       ? window.supabase.createClient(DB_URL, DB_KEY)
       : null;
-
-    // Cryptographic SHA-256 helper so credentials/codes are never exposed in source code
-    async function sha256(str) {
-      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-    }
-    const U_HASH = "e2f1f14e5f02b9227928228d22b1846b94c79d69b86c51c39a93c532645a9e1a";
-    const P_HASH = "8224a7821b00f15a2d05471c1b8c7969a25e49d64f516c49a742b33d78038c4c";
-    const C_HASH = "d497d9f0629c53087d21f020671688310b0b50469103242b9d1599b527b0f4f5";
 
     const defaultData = {
       aboutLeft: [
@@ -308,7 +292,6 @@
     let currentView = visitorName ? "menu" : "landing";
     let pendingTargetView = null;
 
-    // Custom Branded Notice Modal (Never exposes browser URL!)
     function showNotice(title, message, icon = "💌") {
       document.getElementById("noticeIcon").innerText = icon;
       document.getElementById("noticeTitle").innerText = title;
@@ -320,7 +303,6 @@
       document.getElementById("noticeModal").classList.add("hidden");
     }
 
-    // Custom Branded Editor Modal
     function openEditorModal(title, fieldsHTML, onSave) {
       document.getElementById("editorTitle").innerText = title;
       document.getElementById("editorFields").innerHTML = fieldsHTML;
@@ -438,14 +420,11 @@
       }
     }
 
-    async function verifyUserPass() {
-      const u = document.getElementById("authUser").value.trim();
+    function verifyUserPass() {
+      const u = document.getElementById("authUser").value.trim().toLowerCase();
       const p = document.getElementById("authPass").value.trim();
 
-      const uHash = await sha256(u);
-      const pHash = await sha256(p);
-
-      if (uHash === U_HASH && pHash === P_HASH) {
+      if (btoa(u) === "cnVyaXNob3B6" && btoa(p) === "MTkyMDA1") {
         isAdmin = true;
         sessionStorage.setItem("ruri_is_admin", "true");
         const target = pendingTargetView || "menu";
@@ -458,10 +437,9 @@
       }
     }
 
-    async function verifyAccessCode() {
+    function verifyAccessCode() {
       const code = document.getElementById("accessCodeInput").value.trim().toLowerCase();
-      const cHash = await sha256(code);
-      if (cHash === C_HASH) {
+      if (btoa(code) === "cHJvdGVjdGVk") {
         if (pendingTargetView) {
           unlockedCategories[pendingTargetView] = true;
           sessionStorage.setItem("ruri_unlocked", JSON.stringify(unlockedCategories));
@@ -510,7 +488,6 @@
     function render() {
       const app = document.getElementById("app");
 
-      // 1. LANDING PAGE
       if (currentView === "landing") {
         app.innerHTML = `
           <div class="w-full max-w-lg text-center py-6 px-3">
@@ -545,7 +522,6 @@
         return;
       }
 
-      // 2. MAIN MENU HUB
       if (currentView === "menu") {
         const MenuPill = (title, view, locked = false) => {
           const isUnlocked = isAdmin || unlockedCategories[view];
@@ -609,7 +585,6 @@
         return;
       }
 
-      // 3. ABOUT ME PAGE
       if (currentView === "about") {
         app.innerHTML = `
           <div class="w-full py-4">
@@ -682,7 +657,6 @@
         return;
       }
 
-      // ABOUT SUB-VIEWS
       if (["deeper", "beliefs", "romantic"].includes(currentView)) {
         const config = {
           deeper: { title: "Deeper Questions", key: "deeperQuestions", qKey: "q", aKey: "a" },
@@ -725,7 +699,6 @@
         return;
       }
 
-      // 4. DAILY RANTS
       if (currentView === "rants") {
         app.innerHTML = `
           <div class="w-full py-4">
@@ -801,7 +774,6 @@
         return;
       }
 
-      // 5. PRAYERS PAGE
       if (currentView === "prayers") {
         app.innerHTML = `
           <div class="w-full py-4">
@@ -866,7 +838,6 @@
         return;
       }
 
-      // 6. MY LIFE PLANS
       if (currentView === "plans") {
         app.innerHTML = `
           <div class="w-full py-4">
@@ -909,7 +880,6 @@
         return;
       }
 
-      // 7. PROGRESS & ACHIEVEMENTS
       if (currentView === "progress") {
         app.innerHTML = `
           <div class="w-full py-4">
@@ -966,7 +936,6 @@
         return;
       }
 
-      // 8. BUCKET LIST
       if (currentView === "bucketlist") {
         app.innerHTML = `
           <div class="w-full py-4">
@@ -1022,7 +991,6 @@
         return;
       }
 
-      // 9. TIME CAPSULE
       if (currentView === "timecapsule") {
         app.innerHTML = `
           <div class="w-full py-4">
@@ -1065,7 +1033,6 @@
         return;
       }
 
-      // 10. QUESTIONS & UNKNOWN EMAILS (With 100% Privacy & Anonymity Guarantee!)
       if (currentView === "questions") {
         const emailCount = (appData.unknownEmails || []).length;
 
@@ -1124,7 +1091,6 @@
                       send an<br/>unknown<br/>email
                     </button>
 
-                    <!-- Anonymous Email Drawer with Guarantee Badge -->
                     <div id="unknownEmailDrawer" class="hidden bg-zinc-950 border border-[#ff47a3] rounded-2xl p-4 w-64 space-y-2.5 text-left shadow-xl">
                       <div class="flex items-center gap-1.5 text-[#ff47a3] font-semibold text-[11px]">
                         <span>🔒</span>
@@ -1161,7 +1127,6 @@
         return;
       }
 
-      // 11. ADMIN-ONLY: EMAILS TO BE READ
       if (currentView === "emails") {
         app.innerHTML = `
           <div class="w-full py-4 max-w-2xl mx-auto">
@@ -1187,7 +1152,6 @@
         return;
       }
 
-      // 12. RURI'S SETTINGS
       if (currentView === "settings") {
         const logs = JSON.parse(localStorage.getItem("ruri_visitor_logs") || "[]");
         app.innerHTML = `
@@ -1231,7 +1195,6 @@
       }
     }
 
-    // INTERACTIVE HANDLERS (No browser alerts/prompts used anywhere!)
     async function handleEnterSpace() {
       const nameInput = document.getElementById("landingName").value.trim();
       const reasonInput = document.getElementById("landingReason").value.trim();
@@ -1452,7 +1415,6 @@
     function sendUnknownEmail() {
       const text = document.getElementById("unknownEmailText").value.trim();
       if (!text) return;
-      // Sender name is never attached — 100% Unknown
       appData.unknownEmails.unshift({
         id: Date.now(),
         date: new Date().toLocaleDateString("en-US"),
