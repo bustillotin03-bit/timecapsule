@@ -192,11 +192,14 @@
   </div>
 
   <script>
-    const DB_URL = ""; 
-    const DB_KEY = ""; 
-    const dbClient = (DB_URL && DB_KEY && window.supabase)
-      ? window.supabase.createClient(DB_URL, DB_KEY)
-      : null;
+    /*************************************************************************
+     * PASTE YOUR SUPABASE URL AND ANON PUBLIC KEY RIGHT HERE:
+     *************************************************************************/
+    const DB_URL = "https://yvkjbnhbxhckodqbgfhe.supabase.co"; 
+    const DB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2a2pibmhieGhja29kcWJnZmhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4ODIyNjAsImV4cCI6MjEwMDQ1ODI2MH0.NFaO0zV8eyl8IWK3eQZvIzhwkKPIuckDBQRidzLebP8"; 
+
+    const isConfigured = DB_URL.startsWith("http") && DB_KEY.length > 20 && window.supabase;
+    const dbClient = isConfigured ? window.supabase.createClient(DB_URL, DB_KEY) : null;
 
     const defaultData = {
       aboutLeft: [
@@ -285,6 +288,7 @@
     };
 
     let appData = JSON.parse(localStorage.getItem("ruri_space_data")) || defaultData;
+    let visitorLogs = JSON.parse(localStorage.getItem("ruri_visitor_logs") || "[]");
     let visitorName = localStorage.getItem("ruri_visitor_name") || "";
     let visitorReason = localStorage.getItem("ruri_visitor_reason") || "";
     let isAdmin = sessionStorage.getItem("ruri_is_admin") === "true";
@@ -318,26 +322,79 @@
       document.getElementById("editorModal").classList.add("hidden");
     }
 
-    async function syncFromDB() {
+    /*************************************************************************
+     * REAL-TIME MULTI-DEVICE SYNC (Prevents devices from showing different counts!)
+     *************************************************************************/
+    async function syncFromDB(rerender = true) {
       if (!dbClient) return;
       try {
         const { data, error } = await dbClient.from("ruri_space").select("content").eq("id", 1).single();
         if (data && data.content) {
           appData = data.content;
           localStorage.setItem("ruri_space_data", JSON.stringify(appData));
-          render();
+          if (rerender) render();
         } else if (error) {
           await dbClient.from("ruri_space").upsert({ id: 1, content: appData });
+        }
+
+        // Also sync visitor logs across devices
+        const { data: vData } = await dbClient.from("visitor_logs").select("*").order("created_at", { ascending: false }).limit(50);
+        if (vData) {
+          visitorLogs = vData.map(v => ({
+            name: v.name,
+            reason: v.reason,
+            date: new Date(v.created_at).toLocaleString()
+          }));
+          localStorage.setItem("ruri_visitor_logs", JSON.stringify(visitorLogs));
         }
       } catch (e) {}
     }
 
-    async function saveData() {
-      localStorage.setItem("ruri_space_data", JSON.stringify(appData));
+    // Mutate Safely: Always pulls latest cloud data BEFORE adding/editing so tablet & phone never overwrite each other!
+    async function updateCloudData(mutatorFn) {
       if (dbClient) {
-        try { await dbClient.from("ruri_space").upsert({ id: 1, content: appData }); } catch (e) {}
+        try {
+          const { data } = await dbClient.from("ruri_space").select("content").eq("id", 1).single();
+          if (data && data.content) {
+            appData = data.content;
+          }
+        } catch (e) {}
       }
+
+      mutatorFn(appData);
+
+      localStorage.setItem("ruri_space_data", JSON.stringify(appData));
       render();
+
+      if (dbClient) {
+        try {
+          await dbClient.from("ruri_space").upsert({ id: 1, content: appData });
+        } catch (e) {}
+      }
+    }
+
+    // Subscribe to live database changes + background refresh every 6 seconds if user is not typing
+    if (dbClient) {
+      dbClient
+        .channel("ruri_live_sync")
+        .on("postgres_changes", { event: "*", schema: "public", table: "ruri_space" }, (payload) => {
+          if (payload.new && payload.new.content) {
+            appData = payload.new.content;
+            localStorage.setItem("ruri_space_data", JSON.stringify(appData));
+            const activeTag = document.activeElement ? document.activeElement.tagName : "";
+            if (activeTag !== "INPUT" && activeTag !== "TEXTAREA") {
+              render();
+            }
+          }
+        })
+        .subscribe();
+
+      setInterval(() => {
+        const activeTag = document.activeElement ? document.activeElement.tagName : "";
+        if (activeTag !== "INPUT" && activeTag !== "TEXTAREA") {
+          syncFromDB(true);
+        }
+      }, 6000);
     }
 
     const lockedViews = ["prayers", "plans", "progress", "bucketlist", "timecapsule"];
@@ -359,6 +416,7 @@
       }
 
       currentView = view;
+      syncFromDB(true);
       render();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -1153,18 +1211,19 @@
       }
 
       if (currentView === "settings") {
-        const logs = JSON.parse(localStorage.getItem("ruri_visitor_logs") || "[]");
         app.innerHTML = `
           <div class="w-full py-4 max-w-2xl mx-auto text-xs">
             ${backButtonHTML("menu")}
             <div class="bg-zinc-950 border border-[#ff47a3] rounded-2xl p-5 space-y-5">
               <div class="flex justify-between items-center">
                 <h1 class="font-bubble text-xl sm:text-2xl text-[#ff47a3]">Ruri's Settings</h1>
-                <span class="bg-green-500/20 text-green-300 text-[11px] px-2.5 py-0.5 rounded-full">Unlocked</span>
+                <span class="bg-green-500/20 text-green-300 text-[11px] px-2.5 py-0.5 rounded-full">
+                  ${dbClient ? "Cloud Sync Active" : "Local Mode (Add DB Keys)"}
+                </span>
               </div>
 
               <p class="text-zinc-300 leading-relaxed">
-                Edit Mode is active. You can add, edit, or remove any detail directly inside every category page.
+                Edit Mode is active. Every change you make automatically syncs across all devices.
               </p>
 
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -1182,7 +1241,7 @@
               <div>
                 <h3 class="font-bubble text-sm text-pink-300 mb-2">Visitors Who Entered Your Space</h3>
                 <div class="bg-black border border-zinc-800 rounded-xl p-3 max-h-48 overflow-y-auto space-y-1.5">
-                  ${logs.length === 0 ? `<p class="text-zinc-500">No visitor logs recorded yet.</p>` : logs.map(l => `
+                  ${visitorLogs.length === 0 ? `<p class="text-zinc-500">No visitor logs recorded yet.</p>` : visitorLogs.map(l => `
                     <div class="border-b border-zinc-900 pb-1">
                       <span class="text-[#ff47a3] font-bold">${l.name}</span> — "${l.reason}" <span class="text-zinc-500 text-[10px]">(${l.date})</span>
                     </div>
@@ -1209,9 +1268,8 @@
       localStorage.setItem("ruri_visitor_name", visitorName);
       localStorage.setItem("ruri_visitor_reason", visitorReason);
 
-      const logs = JSON.parse(localStorage.getItem("ruri_visitor_logs") || "[]");
-      logs.unshift({ name: visitorName, reason: visitorReason, date: new Date().toLocaleString() });
-      localStorage.setItem("ruri_visitor_logs", JSON.stringify(logs));
+      visitorLogs.unshift({ name: visitorName, reason: visitorReason, date: new Date().toLocaleString() });
+      localStorage.setItem("ruri_visitor_logs", JSON.stringify(visitorLogs));
 
       if (dbClient) {
         try { await dbClient.from("visitor_logs").insert({ name: visitorName, reason: visitorReason }); } catch (e) {}
@@ -1223,8 +1281,7 @@
     function addSimpleItem(key, inputId) {
       const val = document.getElementById(inputId).value.trim();
       if (!val) return;
-      appData[key].push(val);
-      saveData();
+      updateCloudData(data => data[key].push(val));
     }
 
     function editSimpleItem(key, idx) {
@@ -1232,29 +1289,23 @@
         <input id="modalEditInput" value="${appData[key][idx].replace(/"/g, '&quot;')}" class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white"/>
       `, () => {
         const val = document.getElementById("modalEditInput").value.trim();
-        if (val) {
-          appData[key][idx] = val;
-          saveData();
-        }
+        if (val) updateCloudData(data => { data[key][idx] = val; });
       });
     }
 
     function deleteSimpleItem(key, idx) {
-      appData[key].splice(idx, 1);
-      saveData();
+      updateCloudData(data => data[key].splice(idx, 1));
     }
 
     function deleteArrayItem(key, idx) {
-      appData[key].splice(idx, 1);
-      saveData();
+      updateCloudData(data => data[key].splice(idx, 1));
     }
 
     function addSubAboutItem(key, qKey, aKey) {
       const q = document.getElementById("subTitleInput").value.trim();
       const a = document.getElementById("subTextInput").value.trim();
       if (!q || !a) return;
-      appData[key].push({ [qKey]: q, [aKey]: a });
-      saveData();
+      updateCloudData(data => data[key].push({ [qKey]: q, [aKey]: a }));
     }
 
     function editSubAboutItem(key, idx, qKey, aKey) {
@@ -1265,10 +1316,7 @@
       `, () => {
         const newQ = document.getElementById("modalEditQ").value.trim();
         const newA = document.getElementById("modalEditA").value.trim();
-        if (newQ && newA) {
-          appData[key][idx] = { [qKey]: newQ, [aKey]: newA };
-          saveData();
-        }
+        if (newQ && newA) updateCloudData(data => { data[key][idx] = { [qKey]: newQ, [aKey]: newA }; });
       });
     }
 
@@ -1276,8 +1324,7 @@
       const date = document.getElementById("newRantDate").value.trim();
       const text = document.getElementById("newRantText").value.trim();
       if (!text) return;
-      appData.dailyRants.unshift({ id: Date.now(), date, text, comments: [] });
-      saveData();
+      updateCloudData(data => data.dailyRants.unshift({ id: Date.now(), date, text, comments: [] }));
     }
 
     function editDailyRant(idx) {
@@ -1286,9 +1333,12 @@
         <input id="modalEditDate" value="${r.date}" class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white mb-2"/>
         <textarea id="modalEditText" rows="3" class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white">${r.text}</textarea>
       `, () => {
-        appData.dailyRants[idx].date = document.getElementById("modalEditDate").value.trim();
-        appData.dailyRants[idx].text = document.getElementById("modalEditText").value.trim();
-        saveData();
+        const d = document.getElementById("modalEditDate").value.trim();
+        const t = document.getElementById("modalEditText").value.trim();
+        updateCloudData(data => {
+          data.dailyRants[idx].date = d;
+          data.dailyRants[idx].text = t;
+        });
       });
     }
 
@@ -1296,22 +1346,21 @@
       const input = document.getElementById(`rantComment_${idx}`);
       const text = input.value.trim();
       if (!text) return;
-      if (!appData.dailyRants[idx].comments) appData.dailyRants[idx].comments = [];
-      appData.dailyRants[idx].comments.push({ author: visitorName || "Guest", text });
-      saveData();
+      updateCloudData(data => {
+        if (!data.dailyRants[idx].comments) data.dailyRants[idx].comments = [];
+        data.dailyRants[idx].comments.push({ author: visitorName || "Guest", text });
+      });
     }
 
     function deleteRantComment(rantIdx, commentIdx) {
-      appData.dailyRants[rantIdx].comments.splice(commentIdx, 1);
-      saveData();
+      updateCloudData(data => data.dailyRants[rantIdx].comments.splice(commentIdx, 1));
     }
 
     function addPrayer() {
       const date = document.getElementById("newPrayerDate").value.trim();
       const text = document.getElementById("newPrayerText").value.trim();
       if (!text) return;
-      appData.prayers.unshift({ id: Date.now(), date, text });
-      saveData();
+      updateCloudData(data => data.prayers.unshift({ id: Date.now(), date, text }));
     }
 
     function editPrayer(idx) {
@@ -1320,24 +1369,26 @@
         <input id="modalEditDate" value="${p.date}" class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white mb-2"/>
         <textarea id="modalEditText" rows="3" class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white">${p.text}</textarea>
       `, () => {
-        appData.prayers[idx].date = document.getElementById("modalEditDate").value.trim();
-        appData.prayers[idx].text = document.getElementById("modalEditText").value.trim();
-        saveData();
+        const d = document.getElementById("modalEditDate").value.trim();
+        const t = document.getElementById("modalEditText").value.trim();
+        updateCloudData(data => {
+          data.prayers[idx].date = d;
+          data.prayers[idx].text = t;
+        });
       });
     }
 
     function savePlans() {
-      appData.plans = document.getElementById("plansEditor").value;
-      saveData();
-      showNotice("Saved!", "Your Life Plans have been updated.", "🌸");
+      const val = document.getElementById("plansEditor").value;
+      updateCloudData(data => { data.plans = val; });
+      showNotice("Saved!", "Your Life Plans have been updated across all devices.", "🌸");
     }
 
     function addProgressItem() {
       const percent = parseInt(document.getElementById("newProgPercent").value) || 50;
       const text = document.getElementById("newProgText").value.trim();
       if (!text) return;
-      appData.progress.push({ id: Date.now(), percent: Math.min(100, Math.max(0, percent)), text });
-      saveData();
+      updateCloudData(data => data.progress.push({ id: Date.now(), percent: Math.min(100, Math.max(0, percent)), text }));
     }
 
     function editProgressItem(idx) {
@@ -1346,22 +1397,23 @@
         <input id="modalEditPct" type="number" min="0" max="100" value="${item.percent}" class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white mb-2"/>
         <textarea id="modalEditText" rows="2" class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white">${item.text}</textarea>
       `, () => {
-        appData.progress[idx].percent = Math.min(100, Math.max(0, parseInt(document.getElementById("modalEditPct").value) || 0));
-        appData.progress[idx].text = document.getElementById("modalEditText").value.trim();
-        saveData();
+        const p = Math.min(100, Math.max(0, parseInt(document.getElementById("modalEditPct").value) || 0));
+        const t = document.getElementById("modalEditText").value.trim();
+        updateCloudData(data => {
+          data.progress[idx].percent = p;
+          data.progress[idx].text = t;
+        });
       });
     }
 
     function toggleBucketDone(idx) {
-      appData.bucketList[idx].done = !appData.bucketList[idx].done;
-      saveData();
+      updateCloudData(data => { data.bucketList[idx].done = !data.bucketList[idx].done; });
     }
 
     function addBucketItem() {
       const text = document.getElementById("newBucketText").value.trim();
       if (!text) return;
-      appData.bucketList.push({ text, done: false });
-      saveData();
+      updateCloudData(data => data.bucketList.push({ text, done: false }));
     }
 
     function editBucketItem(idx) {
@@ -1369,24 +1421,20 @@
         <input id="modalEditBucket" value="${appData.bucketList[idx].text.replace(/"/g, '&quot;')}" class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white"/>
       `, () => {
         const val = document.getElementById("modalEditBucket").value.trim();
-        if (val) {
-          appData.bucketList[idx].text = val;
-          saveData();
-        }
+        if (val) updateCloudData(data => { data.bucketList[idx].text = val; });
       });
     }
 
     function saveCapsule() {
-      appData.timeCapsule = document.getElementById("capsuleEditor").value;
-      saveData();
-      showNotice("Time Capsule Sealed!", "Your Time Capsule entry has been saved.", "🕰️");
+      const val = document.getElementById("capsuleEditor").value;
+      updateCloudData(data => { data.timeCapsule = val; });
+      showNotice("Time Capsule Sealed!", "Your Time Capsule entry has been saved across all devices.", "🕰️");
     }
 
     function submitPublicQuestion() {
       const text = document.getElementById("publicQuestionInput").value.trim();
       if (!text) return;
-      appData.publicQuestions.unshift({ id: Date.now(), from: visitorName || "Guest", text, reply: "" });
-      saveData();
+      updateCloudData(data => data.publicQuestions.unshift({ id: Date.now(), from: visitorName || "Guest", text, reply: "" }));
     }
 
     function editQuestion(idx) {
@@ -1395,17 +1443,13 @@
         <textarea id="modalEditQText" rows="3" class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white">${q.text}</textarea>
       `, () => {
         const val = document.getElementById("modalEditQText").value.trim();
-        if (val) {
-          appData.publicQuestions[idx].text = val;
-          saveData();
-        }
+        if (val) updateCloudData(data => { data.publicQuestions[idx].text = val; });
       });
     }
 
     function replyToQuestion(idx) {
       const reply = document.getElementById(`replyInput_${idx}`).value.trim();
-      appData.publicQuestions[idx].reply = reply;
-      saveData();
+      updateCloudData(data => { data.publicQuestions[idx].reply = reply; });
     }
 
     function toggleUnknownEmailBox() {
@@ -1415,12 +1459,14 @@
     function sendUnknownEmail() {
       const text = document.getElementById("unknownEmailText").value.trim();
       if (!text) return;
-      appData.unknownEmails.unshift({
-        id: Date.now(),
-        date: new Date().toLocaleDateString("en-US"),
-        text
+      updateCloudData(data => {
+        if (!data.unknownEmails) data.unknownEmails = [];
+        data.unknownEmails.unshift({
+          id: Date.now(),
+          date: new Date().toLocaleDateString("en-US"),
+          text
+        });
       });
-      saveData();
       showNotice(
         "Unknown Email Sent! 🎀",
         "Guaranteed 100% Anonymous: Your name and identity were never recorded.\n\nThis message is locked inside Ruri's private inbox—only Ruri can read it.",
@@ -1432,13 +1478,14 @@
       openEditorModal("Reset All Content?", `
         <p class="text-zinc-300">Are you sure you want to restore all default diary entries?</p>
       `, () => {
-        appData = JSON.parse(JSON.stringify(defaultData));
-        saveData();
+        updateCloudData(data => {
+          Object.assign(data, JSON.parse(JSON.stringify(defaultData)));
+        });
       });
     }
 
     render();
-    syncFromDB();
+    syncFromDB(true);
   </script>
 </body>
 </html>
