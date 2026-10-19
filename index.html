@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ruri's Space</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: DynaPuff (Titles), Plus Jakarta Sans (Clean Body), Caveat (Strictly for Email section) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=DynaPuff:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+      :root {
+        --hot-pink: #ff47a3;
+        --pastel-pink: #ffc2dc;
+        --card-pink: #ffd1e6;
+        --text-pink: #d62976;
+      }
+      body {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+      /* Title Font (Unchanged) */
+      .font-bubble {
+        font-family: 'DynaPuff', system-ui, cursive;
+      }
+      /* Handwriting Font (Used ONLY for the Email/Questions part & Landing subtext) */
+      .font-email {
+        font-family: 'Caveat', cursive;
+      }
+      /* Clean Landing Header */
+      .font-sans-bold {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      /* Smaller, Mobile-Friendly Glossy Pill Buttons */
+      .glossy-pill {
+        background-color: var(--pastel-pink);
+        color: var(--text-pink);
+        border-radius: 9999px;
+        position: relative;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        box-shadow: 0 3px 10px rgba(255, 194, 220, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+      }
+      .glossy-pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(255, 71, 163, 0.35);
+      }
+      .glossy-pill::after {
+        content: '';
+        position: absolute;
+        top: 7px;
+        right: 16px;
+        width: 16px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 999px;
+        transform: rotate(20deg);
+        pointer-events: none;
+      }
+      .glossy-pill::before {
+        content: '';
+        position: absolute;
+        top: 6px;
+        right: 36px;
+        width: 5px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 999px;
+        pointer-events: none;
+      }
+
+      /* Enter 3D Button (Smaller & Clean) */
+      .enter-btn {
+        background-color: var(--hot-pink);
+        color: white;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 6px 32px;
+        box-shadow: 0 4px 0 #ffffff, 0 6px 15px rgba(255, 71, 163, 0.4);
+        transition: all 0.15s ease;
+      }
+      .enter-btn:active {
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 #ffffff;
+      }
+
+      /* Postage Stamp Edge for My Life Plans */
+      .stamp-container {
+        background: var(--hot-pink);
+        padding: 16px;
+        position: relative;
+        -webkit-mask-image: radial-gradient(
+          circle at 9px 9px,
+          transparent 9px,
+          black 9.5px
+        );
+        -webkit-mask-position: -9px -9px;
+        -webkit-mask-size: 28px 28px;
+        mask-image: radial-gradient(
+          circle at 9px 9px,
+          transparent 9px,
+          black 9.5px
+        );
+        mask-position: -9px -9px;
+        mask-size: 28px 28px;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #000;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #ff47a3;
+        border-radius: 99px;
+      }
+    </style>
+  </head>
+  <body class="p-4 md:p-6 select-none text-sm md:text-base">
+    <!-- TOP RIGHT PROFILE BUTTON (Smaller & Mobile Friendly) -->
+    <div class="fixed top-4 right-4 z-50">
+      <div class="relative">
+        <button
+          onclick="toggleProfileMenu()"
+          class="w-10 h-10 md:w-11 md:h-11 rounded-full border-2 border-[#ff47a3] bg-black flex items-center justify-center overflow-hidden hover:scale-105 transition shadow-md shadow-[#ff47a3]/20"
+        >
+          <svg viewBox="0 0 24 24" class="w-8 h-8 fill-[#ff47a3] mt-1.5">
+            <circle cx="12" cy="8" r="4.5" />
+            <path d="M4 21c0-4.5 3.6-7.5 8-7.5s8 3 8 7.5" />
+          </svg>
+        </button>
+
+        <!-- Dropdown Menu (Text Only, No Icons) -->
+        <div
+          id="profileMenu"
+          class="hidden absolute right-0 mt-2 w-44 bg-zinc-950 border border-[#ff47a3] rounded-xl shadow-2xl py-1.5 z-50 text-xs"
+        >
+          <div
+            class="px-3.5 py-1.5 text-[11px] text-pink-300 border-b border-zinc-800 flex justify-between items-center"
+          >
+            <span id="visitorBadge" class="truncate">Guest</span>
+            <span
+              id="adminBadge"
+              class="hidden bg-[#ff47a3] text-white px-1.5 py-0.5 rounded text-[9px] font-bold"
+              >ADMIN</span
+            >
+          </div>
+          <button
+            onclick="goHomeLanding()"
+            class="w-full text-left px-3.5 py-2 hover:bg-[#ff47a3]/20 text-white font-medium transition"
+          >
+            Home
+          </button>
+          <button
+            onclick="openRuriSettings()"
+            class="w-full text-left px-3.5 py-2 hover:bg-[#ff47a3]/20 text-pink-400 font-medium transition"
+          >
+            Ruri's Settings
+          </button>
+          <button
+            id="logoutBtn"
+            onclick="logoutAdmin()"
+            class="hidden w-full text-left px-3.5 py-1.5 hover:bg-red-500/20 text-red-400 text-[11px] border-t border-zinc-800"
+          >
+            Lock Admin Mode
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN DYNAMIC CONTAINER -->
+    <main
+      id="app"
+      class="max-w-4xl mx-auto min-h-[85vh] flex items-center justify-center relative pt-8 md:pt-4"
+    ></main>
+
+    <!-- AUTH / ACCESS CODE MODAL -->
+    <div
+      id="authModal"
+      class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-zinc-950 border border-[#ff47a3] rounded-2xl max-w-sm w-full p-6 relative text-center shadow-2xl"
+      >
+        <button
+          onclick="closeAuthModal()"
+          class="absolute top-3 right-4 text-pink-300 hover:text-white text-xl"
+        >
+          &times;
+        </button>
+
+        <h3 id="authModalTitle" class="font-bubble text-xl text-[#ff47a3] mb-1">
+          Protected Space
+        </h3>
+        <p id="authModalDesc" class="text-xs text-pink-200 mb-4">
+          Only Ruri or people with an access code can enter.
+        </p>
+
+        <!-- Admin Username & Password Form -->
+        <div id="userPassFields" class="space-y-3 text-left text-xs">
+          <div>
+            <label class="block text-pink-300 mb-1">Username</label>
+            <input
+              id="authUser"
+              type="text"
+              placeholder="Enter username..."
+              class="w-full bg-black border border-[#ffc2dc] rounded-full px-3.5 py-2 text-white focus:outline-none focus:border-[#ff47a3]"
+            />
+          </div>
+          <div>
+            <label class="block text-pink-300 mb-1">Password</label>
+            <input
+              id="authPass"
+              type="password"
+              placeholder="••••••••"
+              onkeydown="if(event.key==='Enter') verifyUserPass()"
+              class="w-full bg-black border border-[#ffc2dc] rounded-full px-3.5 py-2 text-white focus:outline-none focus:border-[#ff47a3]"
+            />
+          </div>
+          <button
+            onclick="verifyUserPass()"
+            class="w-full bg-[#ff47a3] hover:bg-pink-500 text-white font-bubble py-2 rounded-full text-sm transition mt-1"
+          >
+            Login
+          </button>
+        </div>
+
+        <!-- Small Underlined Text for Access Code (Word 'protected' is hidden!) -->
+        <div id="accessCodeSection" class="mt-4 pt-3 border-t border-zinc-800">
+          <span
+            onclick="toggleAccessCodeInput()"
+            class="text-[11px] underline text-pink-300 hover:text-white cursor-pointer tracking-wider"
+          >
+            enter access code
+          </span>
+          <div id="accessCodeBox" class="hidden mt-2.5">
+            <input
+              id="accessCodeInput"
+              type="password"
+              placeholder="Type code & press Enter..."
+              onkeydown="if(event.key==='Enter') verifyAccessCode()"
+              class="w-full bg-black border border-pink-400 rounded-lg px-3 py-1.5 text-center text-xs text-white focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <p id="authError" class="hidden text-red-400 text-xs mt-3"></p>
+      </div>
+    </div>
+
+    <script>
+      /**************************************************************
+       * 1. SUPABASE CONFIGURATION (Paste your URL & Anon Key here!)
+       **************************************************************/
+      const SUPABASE_URL = '';
+      const SUPABASE_ANON_KEY = '';
+      const supabaseClient =
+        SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase
+          ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+          : null;
+
+      /**************************************************************
+       * 2. INITIAL STATE
+       **************************************************************/
+      const defaultData = {
+        aboutLeft: [
+          'Nickname : Ruri, Tine, Shan',
+          'Age : 21',
+          'From : Davao City, Philippines',
+          'Birthday : June 24',
+          'Zodiac : Cancer',
+          'MBTI - INTJ-A',
+          'Height - 168 cm',
+        ],
+        aboutMid: [
+          'Night owl',
+          'prefer milk over coffee',
+          'Religion : Christian',
+          'Hobbies : Designing websites, drawing, journaling',
+          "Can't do : swim, ride a bike, cook, math problems",
+        ],
+        deeperQuestions: [
+          {
+            q: 'My Side Quests & Work History (At 21)',
+            a: "I stopped college after my 1st year majoring in Game Development. Since then I've worked as: Novel Writer, Art Commissioner, Canteen Seller, Online Seller/Trader/Midwoman, Graphic Designer (Entry Level), BPO (AT&T, DoorDash, Comcast), Subject Matter Expert (SME), Administrative Assistant, Executive Assistant, and running my own Digital Products & Premium Account business.",
+          },
+          {
+            q: 'Characters I Am Trying To Improve',
+            a: '• Hobbyist (I have a lot of hobbies and struggle to master each of them)\n• Spending Habit\n• Non-sociable\n• Bad-tempered\n• Detached — I cut people off so easily\n• Struggles to communicate (I give the silent treatment)',
+          },
+          {
+            q: 'Major Struggle',
+            a: 'I have so many plans and business goals, and my biggest struggle right now is figuring out how to make them work.',
+          },
+        ],
+        beliefs: [
+          {
+            title: 'Faith & Intentional Living',
+            text: 'As a Christian, I value living with intention, protecting my peace of mind, and building genuine connections rather than rushing through life.',
+          },
+          {
+            title: 'Little Joys',
+            text: 'I love pets—especially cats! I prefer quiet nights, designing websites, and deep conversations over surface-level small talk.',
+          },
+        ],
+        romanticAspect: [
+          {
+            title: 'Intentions & Status',
+            text: "I'm straight and never had a boyfriend (NBSB). I am strictly date-to-marry.",
+          },
+          {
+            title: 'Slow Burn Connection',
+            text: "I'm looking for a slow-burn romance—getting to know each other first and talking about life, beliefs, and dreams. I don't know how to flirt so you might find me a little boring ><",
+          },
+          {
+            title: 'My Boundary',
+            text: "I'd love to build something genuine and intentional, so I'm not ready for any physical intimacy until marriage. I want to build a strong emotional bond first before a physical bond.",
+          },
+        ],
+        dailyRants: [
+          {
+            id: 1,
+            date: '10/19/2026',
+            text: 'Trying to organize 10 different business ideas at 2 AM while drinking milk. Why do I have so many hobbies at once?!',
+            comments: [
+              { author: 'Ruri', text: 'Focus on one goal at a time!' },
+            ],
+          },
+          {
+            id: 2,
+            date: '10/15/2026',
+            text: 'Social battery at 0%. Just want to stay in my room with my cat and design websites all night.',
+            comments: [],
+          },
+          {
+            id: 3,
+            date: '10/10/2026',
+            text: "Built Ruri's Space because I'm a lazy replier and can't screen a hundred people one by one.",
+            comments: [],
+          },
+        ],
+        prayers: [
+          {
+            id: 1,
+            date: '10/18/2026',
+            text: 'Lord, please grant me discipline with my spending habits and clarity to make my business plans work.',
+          },
+          {
+            id: 2,
+            date: '10/12/2026',
+            text: 'Praying for patience, better communication when I feel overwhelmed, and protection for my family and cats.',
+          },
+        ],
+        plans:
+          '1. Scale my digital products & premium account business into a consistent brand.\n2. Master web design & illustration without jumping to 10 new hobbies.\n3. Improve my spending habits and save consistently.\n4. Build a peaceful life in Davao with my cats.',
+        progress: [
+          {
+            id: 1,
+            percent: 65,
+            text: 'Website Design Streak — Already on my 6th website build!',
+          },
+          {
+            id: 2,
+            percent: 45,
+            text: 'Business Consistency & Spending Discipline — Taking it step by step.',
+          },
+        ],
+        bucketList: [
+          { text: 'Launch 10 websites from scratch', done: true },
+          { text: 'Publish a full original novel', done: false },
+          { text: 'Make my business plans work consistently', done: false },
+          { text: 'Finally learn how to swim or ride a bike', done: false },
+          { text: 'Adopt another cat', done: false },
+          { text: 'Have a slow-burn, intentional marriage', done: false },
+        ],
+        timeCapsule:
+          "Dear Future Ruri,\n\nRight now you are 21, living in Davao, figuring out how to make all your big plans work. Remember how far you've already come—from Game Dev student to writer, artist, BPO SME, Executive Assistant, and business owner.\n\nI hope by the time you read this years from now, you've mastered your craft, healed your communication struggles, and built the life you prayed for.",
+        publicQuestions: [
+          {
+            id: 1,
+            from: 'Visitor',
+            text: 'What inspired you to start designing websites?',
+            reply:
+              'I love combining my art and Game Dev background to build personal spaces!',
+          },
+        ],
+        unknownEmails: [
+          {
+            id: 1,
+            date: '10/19/2026',
+            text: 'I read your whole About Me and Romantic Aspect. Respecting your boundaries 100%—your work ethic at 21 is super inspiring!',
+          },
+        ],
+      };
+
+      let appData =
+        JSON.parse(localStorage.getItem('ruri_space_data')) || defaultData;
+      let visitorName = localStorage.getItem('ruri_visitor_name') || '';
+      let visitorReason = localStorage.getItem('ruri_visitor_reason') || '';
+      let isAdmin = sessionStorage.getItem('ruri_is_admin') === 'true';
+      let unlockedCategories = JSON.parse(
+        sessionStorage.getItem('ruri_unlocked') || '{}'
+      );
+      let currentView = visitorName ? 'menu' : 'landing';
+      let pendingTargetView = null;
+
+      async function syncFromSupabase() {
+        if (!supabaseClient) return;
+        try {
+          const { data, error } = await supabaseClient
+            .from('ruri_space')
+            .select('content')
+            .eq('id', 1)
+            .single();
+          if (data && data.content) {
+            appData = data.content;
+            localStorage.setItem('ruri_space_data', JSON.stringify(appData));
+            render();
+          } else if (error) {
+            await supabaseClient
+              .from('ruri_space')
+              .upsert({ id: 1, content: appData });
+          }
+        } catch (e) {}
+      }
+
+      async function saveData() {
+        localStorage.setItem('ruri_space_data', JSON.stringify(appData));
+        if (supabaseClient) {
+          try {
+            await supabaseClient
+              .from('ruri_space')
+              .upsert({ id: 1, content: appData });
+          } catch (e) {}
+        }
+        render();
+      }
+
+      /**************************************************************
+       * 3. NAVIGATION & AUTHENTICATION LOGIC
+       **************************************************************/
+      const lockedViews = [
+        'prayers',
+        'plans',
+        'progress',
+        'bucketlist',
+        'timecapsule',
+      ];
+
+      // Home button in Profile Menu goes straight to Landing Page
+      function goHomeLanding() {
+        document.getElementById('profileMenu').classList.add('hidden');
+        currentView = 'landing';
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function navigate(view) {
+        document.getElementById('profileMenu').classList.add('hidden');
+
+        if (
+          lockedViews.includes(view) &&
+          !isAdmin &&
+          !unlockedCategories[view]
+        ) {
+          pendingTargetView = view;
+          openAuthModal(
+            'category',
+            `This section is private. Enter Ruri's login or use an access code.`
+          );
+          return;
+        }
+
+        currentView = view;
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function toggleProfileMenu() {
+        const menu = document.getElementById('profileMenu');
+        menu.classList.toggle('hidden');
+        document.getElementById('visitorBadge').innerText = visitorName
+          ? `Hi, ${visitorName}`
+          : 'Guest';
+        document
+          .getElementById('adminBadge')
+          .classList.toggle('hidden', !isAdmin);
+        document
+          .getElementById('logoutBtn')
+          .classList.toggle('hidden', !isAdmin);
+      }
+
+      function openRuriSettings() {
+        document.getElementById('profileMenu').classList.add('hidden');
+        if (isAdmin) {
+          navigate('settings');
+        } else {
+          pendingTargetView = 'settings';
+          openAuthModal(
+            'adminOnly',
+            "Login with Ruri's credentials to access Ruri's Settings and Edit Mode."
+          );
+        }
+      }
+
+      function openEmailsToBeRead() {
+        if (isAdmin) {
+          navigate('emails');
+        } else {
+          pendingTargetView = 'emails';
+          openAuthModal(
+            'emails',
+            "Only Ruri can read unknown emails. Enter Ruri's username & password."
+          );
+        }
+      }
+
+      function openAuthModal(mode, desc) {
+        document.getElementById('authModal').classList.remove('hidden');
+        document.getElementById('authModalDesc').innerText = desc;
+        document.getElementById('authError').classList.add('hidden');
+        document.getElementById('authUser').value = '';
+        document.getElementById('authPass').value = '';
+        document.getElementById('accessCodeInput').value = '';
+        document.getElementById('accessCodeBox').classList.add('hidden');
+
+        const codeSec = document.getElementById('accessCodeSection');
+        if (mode === 'category') {
+          codeSec.classList.remove('hidden');
+        } else {
+          codeSec.classList.add('hidden');
+        }
+      }
+
+      function closeAuthModal() {
+        document.getElementById('authModal').classList.add('hidden');
+        pendingTargetView = null;
+      }
+
+      function toggleAccessCodeInput() {
+        const box = document.getElementById('accessCodeBox');
+        box.classList.toggle('hidden');
+        if (!box.classList.contains('hidden')) {
+          document.getElementById('accessCodeInput').focus();
+        }
+      }
+
+      // Updated Credentials: username: rurishopz / password: 192005
+      function verifyUserPass() {
+        const u = document.getElementById('authUser').value.trim();
+        const p = document.getElementById('authPass').value.trim();
+
+        if (u === 'rurishopz' && p === '192005') {
+          isAdmin = true;
+          sessionStorage.setItem('ruri_is_admin', 'true');
+          const target = pendingTargetView || 'menu';
+          closeAuthModal();
+          navigate(target);
+        } else {
+          const err = document.getElementById('authError');
+          err.innerText = 'Invalid username or password!';
+          err.classList.remove('hidden');
+        }
+      }
+
+      // Secret Access Code ('protected') — hidden from public text
+      function verifyAccessCode() {
+        const code = document
+          .getElementById('accessCodeInput')
+          .value.trim()
+          .toLowerCase();
+        if (code === 'protected') {
+          if (pendingTargetView) {
+            unlockedCategories[pendingTargetView] = true;
+            sessionStorage.setItem(
+              'ruri_unlocked',
+              JSON.stringify(unlockedCategories)
+            );
+            const target = pendingTargetView;
+            closeAuthModal();
+            navigate(target);
+          }
+        } else {
+          const err = document.getElementById('authError');
+          err.innerText = 'Incorrect access code!';
+          err.classList.remove('hidden');
+        }
+      }
+
+      function logoutAdmin() {
+        isAdmin = false;
+        unlockedCategories = {};
+        sessionStorage.removeItem('ruri_is_admin');
+        sessionStorage.removeItem('ruri_unlocked');
+        document.getElementById('profileMenu').classList.add('hidden');
+        navigate('menu');
+      }
+
+      /**************************************************************
+       * 4. STATIC STICKERS (Smaller, Non-Animated)
+       **************************************************************/
+      function lockStickerSVG(unlocked = false) {
+        return `
+        <div class="absolute -bottom-2 -right-2 w-9 h-9 pointer-events-none drop-shadow">
+          <svg viewBox="0 0 100 100" class="w-full h-full">
+            <path d="M35 45 V30 C35 18 65 18 65 30 V45" fill="none" stroke="#ff47a3" stroke-width="8" stroke-linecap="round" stroke-dasharray="4 2"/>
+            <path d="M50 88 C50 88 18 68 18 46 C18 34 30 28 40 35 C45 38 48 42 50 45 C52 42 55 38 60 35 C70 28 82 34 82 46 C82 68 50 88 50 88 Z" fill="#ffc2dc" stroke="#ff47a3" stroke-width="4"/>
+            <circle cx="50" cy="55" r="5" fill="#ff47a3"/>
+            <path d="M48 58 L46 68 H54 L52 58 Z" fill="#ff47a3"/>
+            ${unlocked ? '<circle cx="75" cy="25" r="10" fill="#4ade80"/>' : ''}
+          </svg>
+        </div>
+      `;
+      }
+
+      function backButtonHTML(target = 'menu', label = '← back') {
+        return `
+        <button onclick="navigate('${target}')" class="mb-5 text-xs md:text-sm text-pink-300 hover:text-[#ff47a3] flex items-center gap-1.5 font-medium transition">
+          <span>${label}</span>
+        </button>
+      `;
+      }
+
+      /**************************************************************
+       * 5. VIEW RENDERERS
+       **************************************************************/
+      function render() {
+        const app = document.getElementById('app');
+
+        // 1. LANDING PAGE
+        if (currentView === 'landing') {
+          app.innerHTML = `
+          <div class="w-full max-w-lg text-center py-6 px-3">
+            <h1 class="font-sans-bold text-2xl sm:text-4xl md:text-5xl text-white mb-6 tracking-wide">ENTER RURI’S SPACE</h1>
+            
+            <div class="space-y-4 max-w-xs sm:max-w-sm mx-auto">
+              <div>
+                <p class="text-sm sm:text-base text-pink-100 mb-1.5">your name?</p>
+                <input id="landingName" type="text" value="${visitorName}" placeholder="Type your name..." 
+                  class="w-full h-10 sm:h-11 rounded-full bg-[#ff47a3] text-white placeholder-pink-200 px-5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 shadow-md"/>
+              </div>
+
+              <div>
+                <p class="text-sm sm:text-base text-pink-100 mb-1.5">and why do you want to enter my space?</p>
+                <input id="landingReason" type="text" value="${visitorReason}" placeholder="Tell me honestly..." 
+                  onkeydown="if(event.key==='Enter') handleEnterSpace()"
+                  class="w-full h-10 sm:h-11 rounded-full bg-[#ff47a3] text-white placeholder-pink-200 px-5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 shadow-md"/>
+              </div>
+            </div>
+
+            <p class="text-xs sm:text-sm text-zinc-300 max-w-md mx-auto mt-6 leading-relaxed">
+              What you are about to enter is my personal diary and my time capsule. I write my story here, my beliefs, my struggles, and my goals.
+            </p>
+
+            <div class="mt-6">
+              <button onclick="handleEnterSpace()" class="enter-btn text-xs sm:text-sm tracking-wider cursor-pointer">
+                ENTER
+              </button>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 2. MAIN MENU HUB (Smaller Pill Buttons + External Shop Link)
+        if (currentView === 'menu') {
+          const MenuPill = (title, view, locked = false) => {
+            const isUnlocked = isAdmin || unlockedCategories[view];
+            return `
+            <div onclick="navigate('${view}')" class="glossy-pill h-12 sm:h-14 px-5 relative">
+              <span class="font-bubble text-lg sm:text-xl tracking-wide">${title}</span>
+              ${locked ? lockStickerSVG(isUnlocked) : ''}
+            </div>
+          `;
+          };
+
+          app.innerHTML = `
+          <div class="w-full max-w-3xl mx-auto py-6 px-2">
+            ${
+              isAdmin
+                ? `
+              <div class="mb-5 bg-[#ff47a3]/15 border border-[#ff47a3] rounded-xl px-3 py-2 text-center text-xs text-pink-200">
+                <b>Admin Mode Active (rurishopz)</b> — You can add, edit, or remove details inside any section.
+              </div>
+            `
+                : ''
+            }
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 items-center">
+              <!-- Column 1 -->
+              <div class="space-y-3.5 sm:space-y-4">
+                ${MenuPill('about me', 'about', false)}
+                ${MenuPill('daily rants', 'rants', false)}
+                ${MenuPill('prayer', 'prayers', true)}
+                ${MenuPill('questions', 'questions', false)}
+              </div>
+
+              <!-- Column 2 -->
+              <div class="space-y-3.5 sm:space-y-4">
+                ${MenuPill('plans', 'plans', true)}
+                ${MenuPill('progress', 'progress', true)}
+                ${MenuPill('bucket list', 'bucketlist', true)}
+                ${MenuPill('time capsule', 'timecapsule', true)}
+              </div>
+
+              <!-- Column 3: Shop (Redirects to www.rurika.shop) + Static Bunny Sticker -->
+              <div class="flex flex-col items-center justify-between space-y-6 pt-2 sm:pt-0">
+                <a href="https://www.rurika.shop" target="_blank" rel="noopener noreferrer" class="glossy-pill h-12 sm:h-14 px-5 w-full">
+                  <span class="font-bubble text-lg sm:text-xl tracking-wide">shop</span>
+                </a>
+
+                <!-- Static Cute Bunny Holding Pink Heart Sticker -->
+                <div class="w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center">
+                  <svg viewBox="0 0 200 200" class="w-full h-full">
+                    <ellipse cx="75" cy="50" rx="18" ry="32" fill="#fff0f5" stroke="#5c4033" stroke-width="4"/>
+                    <ellipse cx="75" cy="52" rx="10" ry="20" fill="#ffc2dc"/>
+                    <ellipse cx="125" cy="50" rx="18" ry="32" fill="#fff0f5" stroke="#5c4033" stroke-width="4"/>
+                    <ellipse cx="125" cy="52" rx="10" ry="20" fill="#ffc2dc"/>
+                    <circle cx="100" cy="145" r="38" fill="#fff0f5" stroke="#5c4033" stroke-width="4"/>
+                    <ellipse cx="100" cy="100" rx="52" ry="44" fill="#fff0f5" stroke="#5c4033" stroke-width="4"/>
+                    <ellipse cx="70" cy="108" rx="9" ry="6" fill="#ffc2dc"/>
+                    <ellipse cx="130" cy="108" rx="9" ry="6" fill="#ffc2dc"/>
+                    <circle cx="80" cy="100" r="4.5" fill="#5c4033"/>
+                    <circle cx="120" cy="100" r="4.5" fill="#5c4033"/>
+                    <path d="M96 104 L104 110 M104 104 L96 110" stroke="#5c4033" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M125 162 C125 162 98 145 98 128 C98 118 108 113 116 119 C120 122 123 125 125 128 C127 125 130 122 134 119 C142 113 152 118 152 128 C152 145 125 162 125 162 Z" fill="#ff8ac4" stroke="#5c4033" stroke-width="4"/>
+                    <circle cx="112" cy="126" r="3" fill="#ffffff"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 3. ABOUT ME PAGE
+        if (currentView === 'about') {
+          app.innerHTML = `
+          <div class="w-full py-4">
+            ${backButtonHTML('menu')}
+            
+            <div class="flex flex-col items-center mb-6">
+              <svg viewBox="0 0 500 80" class="w-60 sm:w-80 stroke-[#ffc2dc] fill-none" stroke-width="5" stroke-linecap="round">
+                <path d="M250 40 C210 10, 170 70, 195 50 C210 38, 190 25, 175 40 C150 65, 90 65, 50 30 C25 10, 10 45, 35 50 C50 52, 50 35, 38 35" />
+                <circle cx="250" cy="40" r="5" fill="#ffc2dc"/>
+                <path d="M250 40 C290 10, 330 70, 305 50 C290 38, 310 25, 325 40 C350 65, 410 65, 450 30 C475 10, 490 45, 465 50 C450 52, 450 35, 462 35" />
+              </svg>
+              <h1 class="font-bubble text-3xl sm:text-4xl text-[#ff47a3] mt-1">About me</h1>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+              <!-- Left Column -->
+              <div class="space-y-2 text-xs sm:text-sm bg-zinc-950/60 p-4 rounded-2xl border border-zinc-900">
+                ${appData.aboutLeft
+                  .map(
+                    (line, idx) => `
+                  <div class="flex items-center justify-between gap-2 py-0.5">
+                    <span class="text-zinc-100">${line}</span>
+                    ${
+                      isAdmin
+                        ? `
+                      <div class="flex gap-1.5 text-[11px] flex-shrink-0">
+                        <button onclick="editSimpleItem('aboutLeft', ${idx})" class="text-pink-400 hover:underline">Edit</button>
+                        <button onclick="deleteSimpleItem('aboutLeft', ${idx})" class="text-red-400 hover:underline">✕</button>
+                      </div>
+                    `
+                        : ''
+                    }
+                  </div>
+                `
+                  )
+                  .join('')}
+                ${
+                  isAdmin
+                    ? `
+                  <div class="pt-2 flex gap-1.5">
+                    <input id="newAboutLeft" placeholder="Add line..." class="bg-zinc-900 border border-pink-400 rounded-lg px-2.5 py-1 text-xs w-full text-white"/>
+                    <button onclick="addSimpleItem('aboutLeft', 'newAboutLeft')" class="bg-[#ff47a3] px-3 rounded-lg text-xs font-bold">+</button>
+                  </div>
+                `
+                    : ''
+                }
+              </div>
+
+              <!-- Middle Column -->
+              <div class="space-y-2 text-xs sm:text-sm bg-zinc-950/60 p-4 rounded-2xl border border-zinc-900">
+                ${appData.aboutMid
+                  .map(
+                    (line, idx) => `
+                  <div class="flex items-center justify-between gap-2 py-0.5">
+                    <span class="text-zinc-100">${line}</span>
+                    ${
+                      isAdmin
+                        ? `
+                      <div class="flex gap-1.5 text-[11px] flex-shrink-0">
+                        <button onclick="editSimpleItem('aboutMid', ${idx})" class="text-pink-400 hover:underline">Edit</button>
+                        <button onclick="deleteSimpleItem('aboutMid', ${idx})" class="text-red-400 hover:underline">✕</button>
+                      </div>
+                    `
+                        : ''
+                    }
+                  </div>
+                `
+                  )
+                  .join('')}
+                ${
+                  isAdmin
+                    ? `
+                  <div class="pt-2 flex gap-1.5">
+                    <input id="newAboutMid" placeholder="Add line..." class="bg-zinc-900 border border-pink-400 rounded-lg px-2.5 py-1 text-xs w-full text-white"/>
+                    <button onclick="addSimpleItem('aboutMid', 'newAboutMid')" class="bg-[#ff47a3] px-3 rounded-lg text-xs font-bold">+</button>
+                  </div>
+                `
+                    : ''
+                }
+              </div>
+
+              <!-- Right Sub-buttons (Smaller) -->
+              <div class="space-y-3.5">
+                <div onclick="navigate('deeper')" class="glossy-pill h-12 sm:h-14 px-5">
+                  <span class="font-bubble text-base sm:text-lg">deeper questions</span>
+                </div>
+                <div onclick="navigate('beliefs')" class="glossy-pill h-12 sm:h-14 px-5">
+                  <span class="font-bubble text-base sm:text-lg">beliefs</span>
+                </div>
+                <div onclick="navigate('romantic')" class="glossy-pill h-12 sm:h-14 px-5">
+                  <span class="font-bubble text-base sm:text-lg">romantic aspect</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // ABOUT SUB-VIEWS (Deeper Questions, Beliefs, Romantic Aspect)
+        if (['deeper', 'beliefs', 'romantic'].includes(currentView)) {
+          const config = {
+            deeper: {
+              title: 'Deeper Questions',
+              key: 'deeperQuestions',
+              qKey: 'q',
+              aKey: 'a',
+            },
+            beliefs: {
+              title: 'Beliefs',
+              key: 'beliefs',
+              qKey: 'title',
+              aKey: 'text',
+            },
+            romantic: {
+              title: 'Romantic Aspect',
+              key: 'romanticAspect',
+              qKey: 'title',
+              aKey: 'text',
+            },
+          }[currentView];
+
+          const list = appData[config.key] || [];
+
+          app.innerHTML = `
+          <div class="w-full py-4 max-w-2xl mx-auto">
+            ${backButtonHTML('about', '← back to About Me')}
+            <h1 class="font-bubble text-2xl sm:text-4xl text-[#ff47a3] mb-6 text-center">${
+              config.title
+            }</h1>
+
+            <div class="space-y-4">
+              ${list
+                .map(
+                  (item, idx) => `
+                <div class="bg-[#ffd1e6] text-zinc-900 rounded-2xl p-5 shadow-md relative">
+                  ${
+                    isAdmin
+                      ? `
+                    <div class="absolute top-3.5 right-4 flex gap-2 text-xs font-semibold">
+                      <button onclick="editSubAboutItem('${config.key}', ${idx}, '${config.qKey}', '${config.aKey}')" class="text-pink-700 hover:underline">Edit</button>
+                      <button onclick="deleteArrayItem('${config.key}', ${idx})" class="text-red-600 hover:underline">Remove</button>
+                    </div>
+                  `
+                      : ''
+                  }
+                  <h3 class="font-bubble text-base sm:text-lg text-[#d62976] mb-1.5 pr-24">${
+                    item[config.qKey]
+                  }</h3>
+                  <p class="text-xs sm:text-sm whitespace-pre-line leading-relaxed text-zinc-800">${
+                    item[config.aKey]
+                  }</p>
+                </div>
+              `
+                )
+                .join('')}
+            </div>
+
+            ${
+              isAdmin
+                ? `
+              <div class="mt-6 bg-zinc-950 border border-[#ff47a3] rounded-2xl p-4 space-y-2.5 text-xs">
+                <h4 class="font-bubble text-sm text-[#ff47a3]">+ Add New Entry</h4>
+                <input id="subTitleInput" placeholder="Title or Question..." class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white"/>
+                <textarea id="subTextInput" rows="3" placeholder="Details..." class="w-full bg-black border border-pink-400 rounded-lg px-3 py-2 text-white"></textarea>
+                <button onclick="addSubAboutItem('${config.key}', '${config.qKey}', '${config.aKey}')" class="bg-[#ff47a3] text-white px-4 py-1.5 rounded-full font-bubble text-xs">Save Entry</button>
+              </div>
+            `
+                : ''
+            }
+          </div>
+        `;
+          return;
+        }
+
+        // 4. DAILY RANTS
+        if (currentView === 'rants') {
+          app.innerHTML = `
+          <div class="w-full py-4">
+            ${backButtonHTML('menu')}
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <!-- Left Rant Cards -->
+              <div class="md:col-span-7 space-y-4">
+                ${appData.dailyRants
+                  .map(
+                    (rant, idx) => `
+                  <div class="border border-[#ff47a3] rounded-2xl p-4 bg-zinc-950/70 relative">
+                    <div class="flex justify-between items-center mb-1.5">
+                      <span class="text-xs font-bold text-pink-300">${
+                        rant.date
+                      }</span>
+                      ${
+                        isAdmin
+                          ? `
+                        <div class="flex gap-2 text-[11px]">
+                          <button onclick="editDailyRant(${idx})" class="text-pink-400 hover:underline">Edit</button>
+                          <button onclick="deleteArrayItem('dailyRants', ${idx})" class="text-red-400 hover:underline">Remove</button>
+                        </div>
+                      `
+                          : ''
+                      }
+                    </div>
+                    <p class="text-xs sm:text-sm text-zinc-100 mb-3 leading-relaxed">${
+                      rant.text
+                    }</p>
+
+                    <!-- Comments -->
+                    <div class="border-t border-zinc-800 pt-2 space-y-1">
+                      ${(rant.comments || [])
+                        .map(
+                          (c, cIdx) => `
+                        <div class="flex justify-between items-center text-xs text-zinc-300">
+                          <p><b class="text-[#ff47a3]">${c.author}:</b> ${
+                            c.text
+                          }</p>
+                          ${
+                            isAdmin
+                              ? `<button onclick="deleteRantComment(${idx}, ${cIdx})" class="text-[10px] text-red-400">✕</button>`
+                              : ''
+                          }
+                        </div>
+                      `
+                        )
+                        .join('')}
+                      <div class="flex gap-1.5 mt-2">
+                        <input id="rantComment_${idx}" placeholder="Reply as ${
+                      visitorName || 'Guest'
+                    }..." 
+                          onkeydown="if(event.key==='Enter') addRantComment(${idx})"
+                          class="bg-black border border-zinc-700 rounded-full px-3 py-1 text-xs w-full text-white focus:border-[#ff47a3] focus:outline-none"/>
+                        <button onclick="addRantComment(${idx})" class="bg-[#ff47a3] text-white px-3 rounded-full text-xs">Send</button>
+                      </div>
+                    </div>
+                  </div>
+                `
+                  )
+                  .join('')}
+
+                ${
+                  isAdmin
+                    ? `
+                  <div class="border border-dashed border-[#ff47a3] rounded-2xl p-4 space-y-2 text-xs">
+                    <h4 class="font-bubble text-sm text-[#ff47a3]">+ Post New Daily Rant</h4>
+                    <input id="newRantDate" value="${new Date().toLocaleDateString(
+                      'en-US'
+                    )}" class="w-full bg-zinc-900 rounded-lg px-3 py-1.5 text-white"/>
+                    <textarea id="newRantText" rows="2" placeholder="Write your rant..." class="w-full bg-zinc-900 rounded-lg px-3 py-1.5 text-white"></textarea>
+                    <button onclick="addDailyRant()" class="bg-[#ff47a3] text-white px-4 py-1.5 rounded-full font-bubble text-xs">Post Rant</button>
+                  </div>
+                `
+                    : ''
+                }
+              </div>
+
+              <!-- Right Static Sticker: "daily rants" + Calendar -->
+              <div class="md:col-span-5 flex flex-col items-center">
+                <h1 class="font-bubble text-3xl sm:text-4xl text-[#ff47a3] mb-4">daily rants</h1>
+                <div class="w-48 h-48 sm:w-56 sm:h-56">
+                  <svg viewBox="0 0 240 240" class="w-full h-full">
+                    <rect x="20" y="45" width="170" height="165" rx="28" fill="#ff9ec7"/>
+                    <rect x="92" y="20" width="26" height="45" rx="13" fill="#ff9ec7" stroke="#000" stroke-width="6"/>
+                    <rect x="99" y="28" width="12" height="28" rx="6" fill="#fff"/>
+                    <rect x="35" y="80" width="140" height="115" rx="10" fill="#ffffff"/>
+                    <rect x="90" y="92" width="32" height="22" rx="7" fill="#ff9ec7"/>
+                    <rect x="132" y="92" width="32" height="22" rx="7" fill="#ff9ec7"/>
+                    <rect x="48" y="124" width="32" height="22" rx="7" fill="#ff9ec7"/>
+                    <rect x="90" y="124" width="32" height="22" rx="7" fill="#ff9ec7"/>
+                    <rect x="132" y="124" width="32" height="22" rx="7" fill="#ff9ec7"/>
+                    <rect x="48" y="156" width="32" height="22" rx="7" fill="#ff9ec7"/>
+                    <rect x="90" y="156" width="32" height="22" rx="7" fill="#ff9ec7"/>
+                    <g transform="translate(175, 115) rotate(24)">
+                      <rect x="0" y="0" width="44" height="115" rx="8" fill="#ffd1e6" stroke="#5c4033" stroke-width="3"/>
+                      <rect x="0" y="0" width="44" height="45" rx="6" fill="#ff9ec7" stroke="#5c4033" stroke-width="3"/>
+                      <circle cx="15" cy="12" r="4" fill="#fff"/>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 5. PRAYERS PAGE
+        if (currentView === 'prayers') {
+          app.innerHTML = `
+          <div class="w-full py-4">
+            ${backButtonHTML('menu')}
+            <h1 class="font-bubble text-3xl sm:text-4xl text-[#ff47a3] mb-6">Prayers</h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <div class="md:col-span-7 space-y-5">
+                ${appData.prayers
+                  .map(
+                    (p, idx) => `
+                  <div class="bg-[#ffd1e6] text-zinc-900 rounded-2xl p-5 relative shadow-md">
+                    ${
+                      isAdmin
+                        ? `
+                      <div class="absolute top-3 right-4 flex gap-2 text-xs font-semibold">
+                        <button onclick="editPrayer(${idx})" class="text-pink-700 hover:underline">Edit</button>
+                        <button onclick="deleteArrayItem('prayers', ${idx})" class="text-red-600 hover:underline">✕</button>
+                      </div>
+                    `
+                        : ''
+                    }
+                    <p class="text-xs font-bold text-[#d62976] mb-1">${
+                      p.date
+                    }</p>
+                    <p class="text-xs sm:text-sm text-zinc-800 pr-12 leading-relaxed">${
+                      p.text
+                    }</p>
+
+                    <!-- Static Band-Aids Sticker -->
+                    <div class="absolute -bottom-3 -right-3 w-16 h-16 pointer-events-none">
+                      <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <g transform="translate(50,50) rotate(-35) translate(-50,-50)">
+                          <rect x="15" y="35" width="70" height="30" rx="14" fill="#c7e2ff" stroke="#7aa6d8" stroke-width="2"/>
+                          <rect x="38" y="35" width="24" height="30" fill="#fff"/>
+                        </g>
+                        <g transform="translate(50,50) rotate(40) translate(-50,-50)">
+                          <rect x="15" y="35" width="70" height="30" rx="14" fill="#ffc2dc" stroke="#ff8ac4" stroke-width="2"/>
+                          <rect x="38" y="35" width="24" height="30" fill="#fff"/>
+                          <path d="M50 55 C50 55 44 50 44 46 C44 44 47 43 49 45 L50 46 L51 45 C53 43 56 44 56 46 C56 50 50 55 50 55 Z" fill="#ff8ac4"/>
+                        </g>
+                      </svg>
+                    </div>
+                  </div>
+                `
+                  )
+                  .join('')}
+
+                ${
+                  isAdmin
+                    ? `
+                  <div class="bg-zinc-950 border border-[#ff47a3] rounded-2xl p-4 space-y-2 text-xs">
+                    <h4 class="font-bubble text-sm text-[#ff47a3]">+ Add Prayer</h4>
+                    <input id="newPrayerDate" value="${new Date().toLocaleDateString(
+                      'en-US'
+                    )}" class="w-full bg-black rounded-lg px-3 py-1.5 text-white"/>
+                    <textarea id="newPrayerText" rows="2" placeholder="Write your prayer..." class="w-full bg-black rounded-lg px-3 py-1.5 text-white"></textarea>
+                    <button onclick="addPrayer()" class="bg-[#ff47a3] text-white px-4 py-1.5 rounded-full font-bubble text-xs">Save Prayer</button>
+                  </div>
+                `
+                    : ''
+                }
+              </div>
+
+              <!-- Right Static Sticker: Jar of Hearts -->
+              <div class="md:col-span-5 flex justify-center">
+                <div class="w-48 h-56 sm:w-56 sm:h-64">
+                  <svg viewBox="0 0 220 260" class="w-full h-full">
+                    <rect x="55" y="20" width="110" height="36" rx="12" fill="#ffc2dc" stroke="#5c4033" stroke-width="4"/>
+                    <path d="M65 56 L50 90 V220 C50 235 65 245 110 245 C155 245 170 235 170 220 V90 L155 56 Z" fill="#ffffff" stroke="#5c4033" stroke-width="4"/>
+                    <circle cx="85" cy="215" r="18" fill="#ff8ac4" stroke="#5c4033" stroke-width="3"/>
+                    <circle cx="125" cy="215" r="18" fill="#ff47a3" stroke="#5c4033" stroke-width="3"/>
+                    <circle cx="110" cy="115" r="24" fill="#ff9ec7" stroke="#5c4033" stroke-width="3"/>
+                    <rect x="52" y="130" width="116" height="72" fill="#ffc2dc" stroke="#5c4033" stroke-width="3" stroke-dasharray="6 4"/>
+                    <path d="M90 56 C40 20, 20 80, 85 62 L55 155 M130 56 C180 20, 200 80, 135 62 L150 145" fill="none" stroke="#ff8ac4" stroke-width="10" stroke-linecap="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 6. MY LIFE PLANS
+        if (currentView === 'plans') {
+          app.innerHTML = `
+          <div class="w-full py-4">
+            ${backButtonHTML('menu')}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              <div>
+                <h1 class="font-bubble text-3xl sm:text-4xl text-[#ff47a3] text-center mb-4 leading-tight">My Life<br/>Plans</h1>
+                <div class="bg-[#ffd1e6] text-zinc-900 rounded-2xl p-5 min-h-[200px] shadow-lg">
+                  ${
+                    isAdmin
+                      ? `
+                    <textarea id="plansEditor" rows="6" class="w-full bg-white/80 rounded-xl p-3 text-xs sm:text-sm text-zinc-900 focus:outline-none">${appData.plans}</textarea>
+                    <button onclick="savePlans()" class="mt-2.5 bg-[#ff47a3] text-white px-4 py-1.5 rounded-full font-bubble text-xs">Save Life Plans</button>
+                  `
+                      : `
+                    <p class="text-xs sm:text-sm whitespace-pre-line leading-relaxed text-zinc-800">${appData.plans}</p>
+                  `
+                  }
+                </div>
+              </div>
+
+              <!-- Right Static Postage Stamp Sticker -->
+              <div class="flex justify-center">
+                <div class="stamp-container w-56 h-64 sm:w-64 sm:h-72 flex items-center justify-center rounded">
+                  <div class="bg-[#fff8f6] w-full h-full p-4 flex flex-col justify-between items-center relative">
+                    <div class="w-16 h-16 rounded-full border-2 border-[#ff47a3] absolute -top-2 -left-2 flex items-center justify-center opacity-70">
+                      <span class="text-[10px] text-[#ff47a3] font-bold">RURI 50</span>
+                    </div>
+                    <svg viewBox="0 0 160 180" class="w-36 h-36 my-auto">
+                      <path d="M50 80 V45 C50 15 110 15 110 45 V80" fill="none" stroke="#ff9ec7" stroke-width="12"/>
+                      <path d="M80 165 C80 165 20 125 20 82 C20 58 45 48 65 65 L80 80 L95 65 C115 48 140 58 140 82 C140 125 80 165 80 165 Z" fill="#ff9ec7" stroke="#d62976" stroke-width="3"/>
+                      <circle cx="80" cy="110" r="9" fill="#d62976"/>
+                      <path d="M75 115 L71 134 H89 L85 115 Z" fill="#d62976"/>
+                    </svg>
+                    <div class="w-full flex justify-between items-center text-[#ff9ec7] font-bubble text-lg">
+                      <span>50</span>
+                      <span>〜〜〜</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 7. PROGRESS & ACHIEVEMENTS
+        if (currentView === 'progress') {
+          app.innerHTML = `
+          <div class="w-full py-4">
+            ${backButtonHTML('menu')}
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              <div class="md:col-span-7 space-y-6">
+                ${appData.progress
+                  .map(
+                    (item, idx) => `
+                  <div class="space-y-2.5">
+                    <div class="w-full h-5 bg-[#ffd1e6] rounded-full border-2 border-[#3d2622] relative flex items-center">
+                      <div class="h-full bg-[#e07a9b] rounded-full" style="width: ${
+                        item.percent
+                      }%"></div>
+                      <div class="absolute w-8 h-8 -ml-4 flex items-center justify-center text-xl" style="left: ${
+                        item.percent
+                      }%">
+                        🌸
+                      </div>
+                    </div>
+                    <div class="bg-[#ffd1e6] text-zinc-900 rounded-2xl p-4 relative shadow-md">
+                      ${
+                        isAdmin
+                          ? `
+                        <div class="absolute top-2.5 right-3 flex gap-2 text-xs font-semibold">
+                          <button onclick="editProgressItem(${idx})" class="text-pink-700 hover:underline">Edit</button>
+                          <button onclick="deleteArrayItem('progress', ${idx})" class="text-red-600 hover:underline">✕</button>
+                        </div>
+                      `
+                          : ''
+                      }
+                      <p class="text-xs sm:text-sm pr-14">${
+                        item.text
+                      } <span class="text-[#d62976] font-bold">(${
+                      item.percent
+                    }%)</span></p>
+                    </div>
+                  </div>
+                `
+                  )
+                  .join('')}
+
+                ${
+                  isAdmin
+                    ? `
+                  <div class="bg-zinc-950 border border-[#ff47a3] rounded-2xl p-4 space-y-2 text-xs">
+                    <h4 class="font-bubble text-sm text-[#ff47a3]">+ Add Milestone</h4>
+                    <input id="newProgPercent" type="number" min="5" max="100" value="75" placeholder="Percent (0-100)" class="w-full bg-black rounded-lg px-3 py-1.5 text-white"/>
+                    <input id="newProgText" placeholder="Achievement description..." class="w-full bg-black rounded-lg px-3 py-1.5 text-white"/>
+                    <button onclick="addProgressItem()" class="bg-[#ff47a3] text-white px-4 py-1.5 rounded-full font-bubble text-xs">Save Milestone</button>
+                  </div>
+                `
+                    : ''
+                }
+              </div>
+
+              <!-- Right Static Chart Sticker -->
+              <div class="md:col-span-5 flex flex-col items-center">
+                <h1 class="font-bubble text-2xl sm:text-3xl text-[#ffc2dc] text-center mb-4">progress &<br/>achievements</h1>
+                <div class="w-52 h-52 sm:w-60 sm:h-60">
+                  <svg viewBox="0 0 240 220" class="w-full h-full">
+                    <path d="M20 110 L110 70 L130 105 L210 55" fill="none" stroke="#ff47a3" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polygon points="200,40 228,45 212,72" fill="#ff47a3"/>
+                    <rect x="20" y="150" width="30" height="55" fill="#ff47a3"/>
+                    <rect x="62" y="110" width="30" height="95" fill="#ff47a3"/>
+                    <rect x="104" y="140" width="30" height="65" fill="#ff47a3"/>
+                    <rect x="146" y="110" width="30" height="95" fill="#ff47a3"/>
+                    <rect x="188" y="80" width="30" height="125" fill="#ff47a3"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 8. BUCKET LIST
+        if (currentView === 'bucketlist') {
+          app.innerHTML = `
+          <div class="w-full py-4">
+            ${backButtonHTML('menu')}
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              <div class="md:col-span-7 space-y-2.5">
+                ${appData.bucketList
+                  .map(
+                    (item, idx) => `
+                  <div class="flex items-center gap-3">
+                    <button onclick="${
+                      isAdmin ? `toggleBucketDone(${idx})` : ''
+                    }" 
+                      class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs transition ${
+                        item.done
+                          ? 'bg-[#ff47a3] text-white'
+                          : 'bg-[#ffd1e6] text-transparent'
+                      }">
+                      ✓
+                    </button>
+                    <div class="bg-[#ffd1e6] text-zinc-900 rounded-full px-4 py-2 w-full flex justify-between items-center">
+                      <span class="text-xs sm:text-sm ${
+                        item.done ? 'line-through opacity-60' : ''
+                      }">${item.text}</span>
+                      ${
+                        isAdmin
+                          ? `
+                        <div class="flex gap-2 text-[11px] font-semibold">
+                          <button onclick="editBucketItem(${idx})" class="text-pink-700 hover:underline">Edit</button>
+                          <button onclick="deleteArrayItem('bucketList', ${idx})" class="text-red-600 hover:underline">✕</button>
+                        </div>
+                      `
+                          : ''
+                      }
+                    </div>
+                  </div>
+                `
+                  )
+                  .join('')}
+
+                ${
+                  isAdmin
+                    ? `
+                  <div class="pt-3 flex gap-2 text-xs">
+                    <input id="newBucketText" placeholder="New bucket list goal..." class="bg-zinc-900 border border-pink-400 rounded-full px-4 py-1.5 w-full text-white"/>
+                    <button onclick="addBucketItem()" class="bg-[#ff47a3] text-white px-4 rounded-full font-bubble text-xs">Add</button>
+                  </div>
+                `
+                    : ''
+                }
+              </div>
+
+              <!-- Right Static Checklist Sticker -->
+              <div class="md:col-span-5 flex flex-col items-center">
+                <h1 class="font-bubble text-3xl sm:text-4xl text-[#ff8ac4] mb-4">Bucket List</h1>
+                <div class="w-48 h-60 bg-[#ffc2dc] rounded-2xl p-5 border-2 border-zinc-700 shadow-lg space-y-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-7 h-7 bg-[#ff8ac4] border border-zinc-700 flex items-center justify-center text-sm text-yellow-200 font-bold">✓</div>
+                    <div class="space-y-1.5 flex-1"><div class="h-1 bg-zinc-700 w-full"></div><div class="h-1 bg-zinc-700 w-1/2"></div></div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="w-7 h-7 bg-[#ff8ac4] border border-zinc-700"></div>
+                    <div class="space-y-1.5 flex-1"><div class="h-1 bg-zinc-700 w-full"></div><div class="h-1 bg-zinc-700 w-2/3"></div></div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="w-7 h-7 bg-[#ff8ac4] border border-zinc-700"></div>
+                    <div class="space-y-1.5 flex-1"><div class="h-1 bg-zinc-700 w-full"></div><div class="h-1 bg-zinc-700 w-1/2"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 9. TIME CAPSULE
+        if (currentView === 'timecapsule') {
+          app.innerHTML = `
+          <div class="w-full py-4">
+            ${backButtonHTML('menu')}
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              <div class="md:col-span-6">
+                <div class="bg-[#ffd1e6] text-zinc-900 rounded-2xl p-6 min-h-[280px] shadow-xl flex flex-col justify-between">
+                  ${
+                    isAdmin
+                      ? `
+                    <textarea id="capsuleEditor" rows="8" class="w-full bg-white/80 rounded-xl p-3 text-xs sm:text-sm text-zinc-900 focus:outline-none">${appData.timeCapsule}</textarea>
+                    <button onclick="saveCapsule()" class="mt-3 bg-[#ff47a3] text-white py-2 rounded-full font-bubble text-xs">Save Time Capsule</button>
+                  `
+                      : `
+                    <p class="text-xs sm:text-sm whitespace-pre-line leading-relaxed text-zinc-800">${appData.timeCapsule}</p>
+                  `
+                  }
+                </div>
+              </div>
+
+              <!-- Right Static Alarm Clock + Diary Sticker -->
+              <div class="md:col-span-6 flex flex-col items-center">
+                <h1 class="font-bubble text-3xl sm:text-4xl text-[#ff8ac4] mb-3">time capsule</h1>
+                <div class="w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center">
+                  <svg viewBox="0 0 260 240" class="w-full h-full">
+                    <path d="M55 60 C70 25, 140 25, 155 60" fill="none" stroke="#fff" stroke-width="6"/>
+                    <ellipse cx="55" cy="65" rx="30" ry="15" transform="rotate(-25 55 65)" fill="#ff9ec7" stroke="#5c4033" stroke-width="3"/>
+                    <ellipse cx="155" cy="65" rx="30" ry="15" transform="rotate(25 155 65)" fill="#ff9ec7" stroke="#5c4033" stroke-width="3"/>
+                    <circle cx="105" cy="135" r="72" fill="#ffc2dc" stroke="#5c4033" stroke-width="4"/>
+                    <circle cx="105" cy="135" r="56" fill="#fff8f0" stroke="#5c4033" stroke-width="3"/>
+                    <line x1="105" y1="135" x2="80" y2="115" stroke="#ff47a3" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="105" y1="135" x2="140" y2="110" stroke="#ff47a3" stroke-width="5" stroke-linecap="round"/>
+                    <circle cx="105" cy="135" r="6" fill="#000"/>
+                    <g transform="translate(135, 70) rotate(-22)">
+                      <rect x="0" y="0" width="95" height="130" rx="12" fill="#ffd1e6" stroke="#5c4033" stroke-width="3"/>
+                      <rect x="0" y="55" width="95" height="16" fill="#ff9ec7" stroke="#5c4033" stroke-width="2"/>
+                      <circle cx="48" cy="63" r="10" fill="#ff8ac4" stroke="#5c4033" stroke-width="2"/>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 10. QUESTIONS & UNKNOWN EMAILS (Keeps the Caveat font on the email labels!)
+        if (currentView === 'questions') {
+          const emailCount = (appData.unknownEmails || []).length;
+
+          app.innerHTML = `
+          <div class="w-full py-4">
+            ${backButtonHTML('menu')}
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              <!-- Left Column -->
+              <div class="md:col-span-6 space-y-4">
+                <p class="font-email text-2xl sm:text-3xl text-white">drop a question</p>
+                <div class="flex gap-2">
+                  <input id="publicQuestionInput" placeholder="Ask Ruri anything (as ${
+                    visitorName || 'Guest'
+                  })..." 
+                    onkeydown="if(event.key==='Enter') submitPublicQuestion()"
+                    class="w-full h-10 sm:h-11 rounded-full bg-[#ffd1e6] text-zinc-900 placeholder-zinc-600 px-4 text-xs sm:text-sm focus:outline-none"/>
+                  <button onclick="submitPublicQuestion()" class="bg-[#ff47a3] text-white px-4 rounded-full font-bubble text-xs sm:text-sm">Ask</button>
+                </div>
+
+                <!-- Pink Question Board -->
+                <div class="bg-[#ffd1e6] text-zinc-900 rounded-2xl p-4 h-60 overflow-y-auto space-y-3 shadow-lg">
+                  ${appData.publicQuestions
+                    .map(
+                      (q, idx) => `
+                    <div class="bg-white/80 rounded-xl p-3 relative text-xs">
+                      ${
+                        isAdmin
+                          ? `
+                        <div class="absolute top-2 right-2.5 flex gap-2 text-[11px] font-semibold">
+                          <button onclick="editQuestion(${idx})" class="text-pink-700 hover:underline">Edit</button>
+                          <button onclick="deleteArrayItem('publicQuestions', ${idx})" class="text-red-500 hover:underline">✕</button>
+                        </div>
+                      `
+                          : ''
+                      }
+                      <p class="text-[#d62976] font-bold mb-0.5">${
+                        q.from
+                      } asked:</p>
+                      <p class="text-zinc-900 text-xs sm:text-sm">${q.text}</p>
+                      ${
+                        q.reply
+                          ? `<p class="text-zinc-700 mt-1.5 pl-2.5 border-l-2 border-[#ff47a3]"><b>Ruri:</b> ${q.reply}</p>`
+                          : ''
+                      }
+                      ${
+                        isAdmin
+                          ? `
+                        <div class="mt-2 flex gap-1">
+                          <input id="replyInput_${idx}" value="${
+                              q.reply || ''
+                            }" placeholder="Write/edit reply..." class="bg-white border rounded px-2 py-1 text-xs w-full"/>
+                          <button onclick="replyToQuestion(${idx})" class="bg-[#ff47a3] text-white px-2.5 rounded text-xs">Save</button>
+                        </div>
+                      `
+                          : ''
+                      }
+                    </div>
+                  `
+                    )
+                    .join('')}
+                </div>
+
+                <!-- Emails to be read (Handwriting Font Kept!) -->
+                <div onclick="openEmailsToBeRead()" class="inline-flex items-center gap-3 cursor-pointer group pt-1">
+                  <div class="relative bg-[#ffd1e6] w-14 h-10 rounded-lg border-2 border-[#ff47a3] flex items-center justify-center group-hover:scale-105 transition">
+                    <span class="text-xl">🎀</span>
+                    <span class="absolute -top-2.5 -right-2.5 bg-[#ff47a3] text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border border-black shadow">
+                      ${emailCount}
+                    </span>
+                  </div>
+                  <span class="font-email text-2xl sm:text-3xl text-white group-hover:text-[#ff47a3] underline">emails to be read</span>
+                </div>
+              </div>
+
+              <!-- Right Column: "send an unknown email" (Handwriting Font Kept!) + Static Laptop Sticker -->
+              <div class="md:col-span-6 flex flex-col items-center">
+                <h1 class="font-bubble text-3xl sm:text-4xl text-[#ff47a3] mb-4">Questions</h1>
+
+                <div class="flex flex-col sm:flex-row items-center gap-5">
+                  <div class="text-center space-y-3">
+                    <button onclick="toggleUnknownEmailBox()" class="font-email text-2xl sm:text-3xl text-white underline hover:text-[#ff47a3] leading-snug">
+                      send an<br/>unknown<br/>email
+                    </button>
+
+                    <!-- Anonymous Email Drawer -->
+                    <div id="unknownEmailDrawer" class="hidden bg-zinc-950 border border-[#ff47a3] rounded-xl p-3.5 w-60 space-y-2 text-xs">
+                      <p class="font-email text-lg text-pink-300">Sender: Unknown (Anonymous)</p>
+                      <textarea id="unknownEmailText" rows="3" placeholder="Write your secret email to Ruri..." class="w-full bg-black border border-pink-400 rounded-lg p-2 text-xs text-white focus:outline-none"></textarea>
+                      <button onclick="sendUnknownEmail()" class="w-full bg-[#ff47a3] text-white py-1.5 rounded-full font-bubble text-xs">Send Unknown Email</button>
+                    </div>
+                  </div>
+
+                  <!-- Static Coquette Laptop Sticker -->
+                  <div class="w-48 h-44 sm:w-56 sm:h-52">
+                    <svg viewBox="0 0 260 220" class="w-full h-full">
+                      <polygon points="15,165 130,140 240,175 130,205" fill="#ffd1e6" stroke="#5c4033" stroke-width="3"/>
+                      <rect x="105" y="25" width="135" height="145" rx="14" transform="rotate(-8 105 25)" fill="#ffd1e6" stroke="#5c4033" stroke-width="4"/>
+                      <g transform="translate(130, 65) rotate(-8)">
+                        <path d="M40 30 L5 55 L20 68 L45 35 Z" fill="#ff9ec7" stroke="#5c4033" stroke-width="2"/>
+                        <path d="M50 30 L85 55 L70 68 L45 35 Z" fill="#ff9ec7" stroke="#5c4033" stroke-width="2"/>
+                        <ellipse cx="22" cy="22" rx="26" ry="16" fill="#ff9ec7" stroke="#5c4033" stroke-width="2"/>
+                        <ellipse cx="68" cy="22" rx="26" ry="16" fill="#ff9ec7" stroke="#5c4033" stroke-width="2"/>
+                        <circle cx="45" cy="24" r="9" fill="#ff8ac4" stroke="#5c4033" stroke-width="2"/>
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 11. ADMIN-ONLY: EMAILS TO BE READ (Keeps Handwriting Font for Email Vibe!)
+        if (currentView === 'emails') {
+          app.innerHTML = `
+          <div class="w-full py-4 max-w-2xl mx-auto">
+            ${backButtonHTML('questions', '← back to Questions')}
+            <div class="flex justify-between items-center mb-5">
+              <h1 class="font-bubble text-2xl sm:text-3xl text-[#ff47a3]">emails to be read (${
+                appData.unknownEmails.length
+              })</h1>
+              <span class="text-xs bg-zinc-900 border border-pink-400 px-3 py-1 rounded-full text-pink-300">Total: ${
+                appData.unknownEmails.length
+              }</span>
+            </div>
+
+            <div class="space-y-3.5">
+              ${appData.unknownEmails
+                .map(
+                  (em, idx) => `
+                <div class="bg-[#ffd1e6] text-zinc-900 rounded-2xl p-5 relative shadow-md">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="font-email text-xl text-[#d62976] font-bold">From: Unknown • ${em.date}</span>
+                    <button onclick="deleteArrayItem('unknownEmails', ${idx})" class="text-xs text-red-600 font-semibold hover:underline">Remove</button>
+                  </div>
+                  <p class="font-email text-2xl whitespace-pre-line text-zinc-900">${em.text}</p>
+                </div>
+              `
+                )
+                .join('')}
+            </div>
+          </div>
+        `;
+          return;
+        }
+
+        // 12. RURI'S SETTINGS (Admin Dashboard)
+        if (currentView === 'settings') {
+          const logs = JSON.parse(
+            localStorage.getItem('ruri_visitor_logs') || '[]'
+          );
+          app.innerHTML = `
+          <div class="w-full py-4 max-w-2xl mx-auto text-xs">
+            ${backButtonHTML('menu')}
+            <div class="bg-zinc-950 border border-[#ff47a3] rounded-2xl p-5 space-y-5">
+              <div class="flex justify-between items-center">
+                <h1 class="font-bubble text-xl sm:text-2xl text-[#ff47a3]">Ruri's Settings</h1>
+                <span class="bg-green-500/20 text-green-300 text-[11px] px-2.5 py-0.5 rounded-full">Admin: rurishopz</span>
+              </div>
+
+              <p class="text-zinc-300 leading-relaxed">
+                You are logged in as <b>rurishopz</b>. You can add, edit, or remove any detail directly inside every category page.
+              </p>
+
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <button onclick="navigate('emails')" class="bg-[#ff47a3] text-white p-2.5 rounded-xl font-bubble text-xs">
+                  Read Emails (${appData.unknownEmails.length})
+                </button>
+                <button onclick="navigate('about')" class="bg-zinc-900 border border-pink-400 p-2.5 rounded-xl font-bubble text-xs text-pink-300">
+                  Edit About Me
+                </button>
+                <button onclick="resetToDefault()" class="bg-zinc-900 border border-red-400 p-2.5 rounded-xl text-xs text-red-300 hover:bg-red-950">
+                  Reset Default Data
+                </button>
+              </div>
+
+              <div>
+                <h3 class="font-bubble text-sm text-pink-300 mb-2">Visitors Who Entered Your Space</h3>
+                <div class="bg-black border border-zinc-800 rounded-xl p-3 max-h-48 overflow-y-auto space-y-1.5">
+                  ${
+                    logs.length === 0
+                      ? `<p class="text-zinc-500">No visitor logs recorded yet.</p>`
+                      : logs
+                          .map(
+                            (l) => `
+                    <div class="border-b border-zinc-900 pb-1">
+                      <span class="text-[#ff47a3] font-bold">${l.name}</span> — "${l.reason}" <span class="text-zinc-500 text-[10px]">(${l.date})</span>
+                    </div>
+                  `
+                          )
+                          .join('')
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        }
+      }
+
+      /**************************************************************
+       * 6. INTERACTIVE HANDLERS (Full Add / Edit / Remove)
+       **************************************************************/
+      async function handleEnterSpace() {
+        const nameInput = document.getElementById('landingName').value.trim();
+        const reasonInput = document
+          .getElementById('landingReason')
+          .value.trim();
+
+        if (!nameInput || !reasonInput) {
+          alert('Please enter your name and reason first.');
+          return;
+        }
+
+        visitorName = nameInput;
+        visitorReason = reasonInput;
+        localStorage.setItem('ruri_visitor_name', visitorName);
+        localStorage.setItem('ruri_visitor_reason', visitorReason);
+
+        const logs = JSON.parse(
+          localStorage.getItem('ruri_visitor_logs') || '[]'
+        );
+        logs.unshift({
+          name: visitorName,
+          reason: visitorReason,
+          date: new Date().toLocaleString(),
+        });
+        localStorage.setItem('ruri_visitor_logs', JSON.stringify(logs));
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient
+              .from('visitor_logs')
+              .insert({ name: visitorName, reason: visitorReason });
+          } catch (e) {}
+        }
+
+        navigate('menu');
+      }
+
+      // Add / Edit / Remove for About Me lines
+      function addSimpleItem(key, inputId) {
+        const val = document.getElementById(inputId).value.trim();
+        if (!val) return;
+        appData[key].push(val);
+        saveData();
+      }
+
+      function editSimpleItem(key, idx) {
+        const updated = prompt('Edit detail:', appData[key][idx]);
+        if (updated !== null && updated.trim() !== '') {
+          appData[key][idx] = updated.trim();
+          saveData();
+        }
+      }
+
+      function deleteSimpleItem(key, idx) {
+        appData[key].splice(idx, 1);
+        saveData();
+      }
+
+      function deleteArrayItem(key, idx) {
+        appData[key].splice(idx, 1);
+        saveData();
+      }
+
+      // Add / Edit for Deeper Questions, Beliefs, Romantic Aspect
+      function addSubAboutItem(key, qKey, aKey) {
+        const q = document.getElementById('subTitleInput').value.trim();
+        const a = document.getElementById('subTextInput').value.trim();
+        if (!q || !a) return;
+        appData[key].push({ [qKey]: q, [aKey]: a });
+        saveData();
+      }
+
+      function editSubAboutItem(key, idx, qKey, aKey) {
+        const item = appData[key][idx];
+        const newQ = prompt('Edit heading:', item[qKey]);
+        if (newQ === null) return;
+        const newA = prompt('Edit description:', item[aKey]);
+        if (newA === null) return;
+        appData[key][idx] = { [qKey]: newQ.trim(), [aKey]: newA.trim() };
+        saveData();
+      }
+
+      // Add / Edit / Comment for Daily Rants
+      function addDailyRant() {
+        const date = document.getElementById('newRantDate').value.trim();
+        const text = document.getElementById('newRantText').value.trim();
+        if (!text) return;
+        appData.dailyRants.unshift({
+          id: Date.now(),
+          date,
+          text,
+          comments: [],
+        });
+        saveData();
+      }
+
+      function editDailyRant(idx) {
+        const r = appData.dailyRants[idx];
+        const newDate = prompt('Edit date:', r.date);
+        if (newDate === null) return;
+        const newText = prompt('Edit rant:', r.text);
+        if (newText === null) return;
+        appData.dailyRants[idx].date = newDate.trim();
+        appData.dailyRants[idx].text = newText.trim();
+        saveData();
+      }
+
+      function addRantComment(idx) {
+        const input = document.getElementById(`rantComment_${idx}`);
+        const text = input.value.trim();
+        if (!text) return;
+        if (!appData.dailyRants[idx].comments)
+          appData.dailyRants[idx].comments = [];
+        appData.dailyRants[idx].comments.push({
+          author: visitorName || 'Guest',
+          text,
+        });
+        saveData();
+      }
+
+      function deleteRantComment(rantIdx, commentIdx) {
+        appData.dailyRants[rantIdx].comments.splice(commentIdx, 1);
+        saveData();
+      }
+
+      // Add / Edit for Prayers
+      function addPrayer() {
+        const date = document.getElementById('newPrayerDate').value.trim();
+        const text = document.getElementById('newPrayerText').value.trim();
+        if (!text) return;
+        appData.prayers.unshift({ id: Date.now(), date, text });
+        saveData();
+      }
+
+      function editPrayer(idx) {
+        const p = appData.prayers[idx];
+        const newDate = prompt('Edit date:', p.date);
+        if (newDate === null) return;
+        const newText = prompt('Edit prayer:', p.text);
+        if (newText === null) return;
+        appData.prayers[idx].date = newDate.trim();
+        appData.prayers[idx].text = newText.trim();
+        saveData();
+      }
+
+      function savePlans() {
+        appData.plans = document.getElementById('plansEditor').value;
+        saveData();
+        alert('Life Plans saved!');
+      }
+
+      // Add / Edit for Progress
+      function addProgressItem() {
+        const percent =
+          parseInt(document.getElementById('newProgPercent').value) || 50;
+        const text = document.getElementById('newProgText').value.trim();
+        if (!text) return;
+        appData.progress.push({
+          id: Date.now(),
+          percent: Math.min(100, Math.max(0, percent)),
+          text,
+        });
+        saveData();
+      }
+
+      function editProgressItem(idx) {
+        const item = appData.progress[idx];
+        const newPct = prompt('Edit percentage (0-100):', item.percent);
+        if (newPct === null) return;
+        const newTxt = prompt('Edit milestone text:', item.text);
+        if (newTxt === null) return;
+        appData.progress[idx].percent = Math.min(
+          100,
+          Math.max(0, parseInt(newPct) || 0)
+        );
+        appData.progress[idx].text = newTxt.trim();
+        saveData();
+      }
+
+      // Add / Edit / Toggle for Bucket List
+      function toggleBucketDone(idx) {
+        appData.bucketList[idx].done = !appData.bucketList[idx].done;
+        saveData();
+      }
+
+      function addBucketItem() {
+        const text = document.getElementById('newBucketText').value.trim();
+        if (!text) return;
+        appData.bucketList.push({ text, done: false });
+        saveData();
+      }
+
+      function editBucketItem(idx) {
+        const updated = prompt(
+          'Edit bucket list item:',
+          appData.bucketList[idx].text
+        );
+        if (updated !== null && updated.trim() !== '') {
+          appData.bucketList[idx].text = updated.trim();
+          saveData();
+        }
+      }
+
+      function saveCapsule() {
+        appData.timeCapsule = document.getElementById('capsuleEditor').value;
+        saveData();
+        alert('Time capsule saved!');
+      }
+
+      // Questions & Unknown Emails
+      function submitPublicQuestion() {
+        const text = document
+          .getElementById('publicQuestionInput')
+          .value.trim();
+        if (!text) return;
+        appData.publicQuestions.unshift({
+          id: Date.now(),
+          from: visitorName || 'Guest',
+          text,
+          reply: '',
+        });
+        saveData();
+      }
+
+      function editQuestion(idx) {
+        const q = appData.publicQuestions[idx];
+        const newTxt = prompt('Edit question text:', q.text);
+        if (newTxt !== null && newTxt.trim() !== '') {
+          appData.publicQuestions[idx].text = newTxt.trim();
+          saveData();
+        }
+      }
+
+      function replyToQuestion(idx) {
+        const reply = document.getElementById(`replyInput_${idx}`).value.trim();
+        appData.publicQuestions[idx].reply = reply;
+        saveData();
+      }
+
+      function toggleUnknownEmailBox() {
+        document
+          .getElementById('unknownEmailDrawer')
+          .classList.toggle('hidden');
+      }
+
+      function sendUnknownEmail() {
+        const text = document.getElementById('unknownEmailText').value.trim();
+        if (!text) return;
+        appData.unknownEmails.unshift({
+          id: Date.now(),
+          date: new Date().toLocaleDateString('en-US'),
+          text,
+        });
+        saveData();
+        alert('Your unknown email has been sent anonymously to Ruri!');
+      }
+
+      function resetToDefault() {
+        if (confirm('Reset all content back to default?')) {
+          appData = JSON.parse(JSON.stringify(defaultData));
+          saveData();
+        }
+      }
+
+      // Start App
+      render();
+      syncFromSupabase();
+    </script>
+  </body>
+</html>
